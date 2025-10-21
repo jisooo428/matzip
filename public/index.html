@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>맛집 찾기 - 주변 맛집 검색</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">
+                <i class="fas fa-utensils"></i>
+                맛집 찾기
+            </h1>
+            <p class="subtitle">주변 맛집을 쉽게 찾아보세요</p>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <!-- 검색 섹션 -->
+            <section class="search-section">
+                <div class="search-box">
+                    <div class="location-input">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <input type="text" id="locationInput" placeholder="지역을 입력하세요 (예: 강남구, 홍대)">
+                    </div>
+                    <div class="search-controls">
+                        <select id="categoryFilter" class="filter-select">
+                            <option value="">모든 카테고리</option>
+                            <option value="한식">한식</option>
+                            <option value="중식">중식</option>
+                            <option value="일식">일식</option>
+                            <option value="양식">양식</option>
+                            <option value="아시안">아시안</option>
+                            <option value="카페">카페</option>
+                            <option value="디저트">디저트</option>
+                            <option value="바">바</option>
+                            <option value="기타">기타</option>
+                        </select>
+                        <button id="searchBtn" class="search-btn">
+                            <i class="fas fa-search"></i>
+                            검색
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 로딩 상태 -->
+            <div id="loading" class="loading hidden">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>맛집을 찾고 있습니다...</p>
+            </div>
+
+            <!-- 탭 네비게이션 -->
+            <div class="tab-navigation">
+                <button id="searchTab" class="tab-btn active">검색 결과</button>
+                <button id="favoritesTab" class="tab-btn">즐겨찾기</button>
+                <button id="myRestaurantsTab" class="tab-btn">내 맛집</button>
+            </div>
+
+            <!-- 결과 섹션 -->
+            <section id="results" class="results">
+                <div class="results-header">
+                    <h2 id="resultsTitle">검색 결과</h2>
+                    <div class="results-count">
+                        <span id="resultsCount">0</span>개의 맛집을 찾았습니다
+                    </div>
+                </div>
+                <div id="restaurantList" class="restaurant-list">
+                    <!-- 맛집 목록이 여기에 동적으로 추가됩니다 -->
+                </div>
+            </section>
+
+            <!-- 즐겨찾기 섹션 -->
+            <section id="favorites" class="results hidden">
+                <div class="results-header">
+                    <h2>즐겨찾기</h2>
+                    <div class="results-count">
+                        <span id="favoritesCount">0</span>개의 즐겨찾기
+                    </div>
+                </div>
+                <div id="favoritesList" class="restaurant-list">
+                    <!-- 즐겨찾기 목록이 여기에 동적으로 추가됩니다 -->
+                </div>
+            </section>
+
+            <!-- 내 맛집 섹션 -->
+            <section id="myRestaurants" class="results hidden">
+                <div class="results-header">
+                    <h2>내 맛집</h2>
+                    <div class="results-count">
+                        <span id="myRestaurantsCount">0</span>개의 맛집
+                    </div>
+                    <button id="addRestaurantBtn" class="add-restaurant-btn">
+                        <i class="fas fa-plus"></i>
+                        맛집 추가
+                    </button>
+                </div>
+                <div id="myRestaurantsList" class="restaurant-list">
+                    <!-- 내 맛집 목록이 여기에 동적으로 추가됩니다 -->
+                </div>
+            </section>
+
+            <!-- 빈 상태 -->
+            <div id="emptyState" class="empty-state">
+                <i class="fas fa-search"></i>
+                <h3>맛집을 검색해보세요</h3>
+                <p>위치를 입력하여 주변 맛집을 찾아보세요</p>
+                <div class="troubleshooting" id="troubleshooting" style="display: none;">
+                    <h4><i class="fas fa-tools"></i> 문제 해결</h4>
+                    <p>API가 작동하지 않는 경우:</p>
+                    <ol>
+                        <li><strong>로컬 서버 사용</strong>: <code>start_server.bat</code> 실행 후 <code>http://localhost:8000</code> 접속</li>
+                        <li><strong>브라우저 콘솔 확인</strong>: F12 → Console 탭에서 오류 메시지 확인</li>
+                        <li><strong>API 키 확인</strong>: 카카오 개발자 센터에서 API 키 상태 확인</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 맛집 찾기. 모든 권리 보유.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
