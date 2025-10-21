@@ -531,7 +531,7 @@ function getDefaultFoodImage() {
     return 'images/food.jpg';
 }
 
-// 음식 사진을 우선적으로 선택하는 함수 (강화된 버전)
+// 음식 사진을 우선적으로 선택하는 함수 (간소화된 버전)
 function getBestFoodPhoto(restaurant) {
     if (!restaurant.photos || restaurant.photos.length === 0) {
         return getDefaultFoodImage();
@@ -539,68 +539,23 @@ function getBestFoodPhoto(restaurant) {
     
     const photos = restaurant.photos;
     
-    // 1. 사진들을 점수로 평가하여 음식 사진일 가능성이 높은 것 선택
-    const scoredPhotos = photos.map((photo, index) => {
-        let score = 0;
-        
-        // 크기 점수 (적절한 크기일수록 높은 점수)
-        if (photo.width && photo.height) {
-            const area = photo.width * photo.height;
-            if (area >= 500000) score += 5; // 500x1000 이상 (고화질)
-            else if (area >= 300000) score += 4; // 300x1000 이상
-            else if (area >= 150000) score += 3; // 300x500 이상
-            else if (area >= 75000) score += 2; // 300x250 이상
-            else if (area >= 50000) score += 1; // 250x200 이상
-        }
-        
-        // 가로세로 비율 점수 (음식 사진은 보통 4:3 또는 16:9 비율)
-        if (photo.width && photo.height) {
-            const ratio = photo.width / photo.height;
-            if (ratio >= 1.2 && ratio <= 1.8) score += 5; // 4:3 비율 (음식 사진에 최적)
-            else if (ratio >= 1.5 && ratio <= 2.2) score += 4; // 16:9 비율
-            else if (ratio >= 1.0 && ratio <= 2.5) score += 3; // 가로형
-            else if (ratio > 0.8 && ratio < 1.2) score += 2; // 정사각형
-            else score += 1; // 세로형
-        }
-        
-        // 순서 점수 (뒤쪽 사진일수록 음식 사진일 가능성이 높음)
-        // 첫 번째 사진은 보통 외관, 마지막 사진들은 음식일 가능성이 높음
-        if (index === 0) score -= 2; // 첫 번째 사진은 외관일 가능성 높음
-        else if (index >= photos.length - 3) score += 4; // 마지막 3개 사진
-        else if (index >= photos.length - 5) score += 2; // 마지막 5개 사진
-        else score += 1; // 중간 사진들
-        
-        // 사진 인덱스 기반 점수 (뒤쪽일수록 높은 점수)
-        score += (photos.length - index) * 0.8;
-        
-        // 최소 크기 요구사항 (너무 작은 사진 제외)
-        if (photo.width && photo.width < 150) score = 0;
-        if (photo.height && photo.height < 100) score = 0;
-        
-        // 최대 크기 제한 (너무 큰 사진은 외관일 가능성 높음)
-        if (photo.width && photo.width > 2000) score -= 1;
-        if (photo.height && photo.height > 1500) score -= 1;
-        
-        return { photo, score, index };
-    });
+    // 간단한 로직: 마지막 3개 사진 중에서 선택 (음식 사진일 가능성이 높음)
+    const candidatePhotos = photos.slice(-3);
     
-    // 점수가 높은 순으로 정렬
-    scoredPhotos.sort((a, b) => b.score - a.score);
-    
-    // 상위 3개 사진 중에서 선택 (더 안전한 선택)
-    const topPhotos = scoredPhotos.slice(0, 3);
-    
-    // 최고 점수 사진 선택 (점수가 0보다 큰 경우만)
-    const selectedPhoto = topPhotos.find(p => p.score > 0) || photos[0];
+    // 적절한 크기의 사진 선택
+    const selectedPhoto = candidatePhotos.find(photo => 
+        photo.width && photo.height && 
+        photo.width >= 200 && photo.height >= 150 &&
+        photo.width <= 1500 && photo.height <= 1000
+    ) || candidatePhotos[0] || photos[0];
     
     console.log(`🍽️ ${restaurant.name} 사진 선택:`, {
         totalPhotos: photos.length,
-        selectedIndex: selectedPhoto.index,
-        score: selectedPhoto.score,
-        dimensions: `${selectedPhoto.photo.width}x${selectedPhoto.photo.height}`
+        selectedIndex: photos.indexOf(selectedPhoto),
+        dimensions: `${selectedPhoto.width}x${selectedPhoto.height}`
     });
     
-    return getGooglePhotoUrl(selectedPhoto.photo.photo_reference, 400);
+    return getGooglePhotoUrl(selectedPhoto.photo_reference, 400);
 }
 
 // 구글 Place Details API로 상세 정보 가져오기
@@ -610,7 +565,7 @@ async function getPlaceDetails(placeId) {
     }
     
     try {
-        const proxyUrl = `http://localhost:3002/api/place-details?place_id=${placeId}&key=${GOOGLE_API_KEY}`;
+        const proxyUrl = `/api/place-details?place_id=${placeId}&key=${GOOGLE_API_KEY}`;
         const response = await fetch(proxyUrl);
         
         if (!response.ok) {
@@ -664,7 +619,7 @@ function calculateDistance(loc1, loc2) {
 }
 
 // 구글 플레이스 API 호출 함수 (프록시 서버 사용) - 다양한 키워드로 검색
-async function searchGooglePlaces(query, maxResults = 60) {
+async function searchGooglePlaces(query, maxResults = 20) {
     if (GOOGLE_API_KEY === 'YOUR_GOOGLE_API_KEY') {
         console.log('구글 API 키가 설정되지 않음');
         return [];
@@ -673,17 +628,12 @@ async function searchGooglePlaces(query, maxResults = 60) {
     console.log('🔍 구글 Places API (New) 검색 중:', query, `(최대 ${maxResults}개)`);
     
     try {
-        // 저렴한 점심 맛집을 강조하는 검색 키워드
+        // 저렴한 점심 맛집을 강조하는 검색 키워드 (5개로 줄임)
         const searchQueries = [
             `${query} 만원 맛집`,
-            `${query} 만원대 맛집`,
-            `${query} 저렴한 점심`,
             `${query} 가성비 점심`,
             `${query} 1만원 맛집`,
-            `${query} 2만원 맛집`,
             `${query} 점심 맛집`,
-            `${query} 가성비 맛집`,
-            `${query} 저렴한 맛집`,
             `${query} 맛집`
         ];
         
@@ -718,8 +668,9 @@ async function searchGooglePlaces(query, maxResults = 60) {
                     const processedResults = await Promise.all(data.results.map(async (place) => {
                         console.log('🏪 구글 장소 처리 중:', place.name);
                         
-                        // Place Details API로 상세 정보 가져오기
-                        const placeDetails = await getPlaceDetails(place.place_id);
+                        // Place Details API 호출을 최적화 - 필수 정보만 요청
+                        const placeDetails = place.types && place.types.length > 0 ? 
+                            await getPlaceDetails(place.place_id) : null;
                         
                         // 분류 우선순위: Place Details > 이름 > types
                         const detailsCategory = placeDetails ? getCategoryFromPlaceDetails(placeDetails) : null;
@@ -768,10 +719,10 @@ async function searchGooglePlaces(query, maxResults = 60) {
                     console.log(`✅ 키워드 "${searchQuery}" 처리 완료:`, processedResults.length, '개 (총', allResults.length, '개)');
                 }
                 
-                // 키워드 간 잠시 대기 (API 제한 방지)
+                // 키워드 간 잠시 대기 (API 제한 방지) - 0.5초로 단축
                 if (i < searchQueries.length - 1) {
-                    console.log('⏳ 다음 키워드 검색 대기 중... (1초)');
-                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    console.log('⏳ 다음 키워드 검색 대기 중... (0.5초)');
+                    await new Promise(resolve => setTimeout(resolve, 500));
                 }
                 
             } catch (error) {
@@ -812,7 +763,7 @@ async function searchGooglePlaces(query, maxResults = 60) {
         
         allResults = affordableResults;
         
-        // 자연스러운 결과 수 (최대 60개로 제한)
+        // 자연스러운 결과 수 (최대 20개로 제한)
         const finalResults = allResults.slice(0, Math.min(maxResults, allResults.length));
         console.log('🎉 최종 검색 결과:', finalResults.length, '개 (만원대 점심 맛집 필터링 완료)');
         console.log('💰 가격대 분포:', finalResults.map(r => `${r.name}: ${r.priceLevel || 0}레벨`).slice(0, 5));
@@ -1023,9 +974,9 @@ async function searchRestaurants() {
     showLoading();
     
     try {
-        // 구글 플레이스 API로 실제 맛집 데이터 검색 (평점 포함) - 최대 60개
+        // 구글 플레이스 API로 실제 맛집 데이터 검색 (평점 포함) - 최대 20개
         console.log('🔍 구글 API 검색 시작:', location);
-        const searchResults = await searchGooglePlaces(location, 60);
+        const searchResults = await searchGooglePlaces(location, 20);
         
         console.log('📊 구글 API 검색 결과:', searchResults);
         console.log('📊 결과 개수:', searchResults.length);
@@ -1108,7 +1059,7 @@ function getPlaceTypeForCategory(category) {
 
 // API 호출 시 장소 유형 필터링 적용
 function getSearchUrlWithTypeFilter(query, category) {
-    let baseUrl = `http://localhost:3002/api/places?query=${encodeURIComponent(query)}&key=${GOOGLE_API_KEY}`;
+    let baseUrl = `/api/places?query=${encodeURIComponent(query)}&key=${GOOGLE_API_KEY}`;
     
     // 현재 위치가 있으면 위치 기반 검색 추가
     if (currentLocation) {
@@ -1680,7 +1631,7 @@ async function testApiConnection() {
     }
     
     try {
-        const testUrl = `http://localhost:3002/api/places?query=강남구 맛집&key=${GOOGLE_API_KEY}`;
+        const testUrl = `/api/places?query=강남구 맛집&key=${GOOGLE_API_KEY}`;
         console.log('🧪 프록시 서버 연결 테스트 시작:', testUrl);
         
         const response = await fetch(testUrl);
