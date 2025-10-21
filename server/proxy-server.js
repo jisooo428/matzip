@@ -26,8 +26,8 @@ app.get('/api/places', async (req, res) => {
         // 새로운 Places API 엔드포인트 사용
         const googleUrl = 'https://places.googleapis.com/v1/places:searchText';
         
-        // FieldMask를 사용하여 필요한 필드만 요청
-        const fieldMask = 'places.id,places.displayName,places.types,places.rating,places.userRatingCount,places.formattedAddress,places.location,places.photos,places.priceLevel,places.websiteUri,places.editorialSummary,places.reviews,places.primaryType';
+        // FieldMask를 사용하여 필요한 필드만 요청 (최적화)
+        const fieldMask = 'places.id,places.displayName,places.types,places.rating,places.userRatingCount,places.formattedAddress,places.location,places.photos,places.priceLevel';
         
         // 요청 본문 구성 (새로운 Places API 형식)
         const requestBody = {
@@ -131,7 +131,7 @@ app.get('/api/place-details', async (req, res) => {
         
         // 새로운 Places API 엔드포인트 사용 (최소 필드로 테스트)
         const googleUrl = `https://places.googleapis.com/v1/places/${place_id}`;
-        const fieldMask = 'id,displayName,types,rating,userRatingCount,formattedAddress,location,photos,priceLevel,websiteUri,reviews';
+        const fieldMask = 'id,displayName,types,rating,userRatingCount,formattedAddress,location,photos,priceLevel';
         
         console.log('Place Details API (New) 호출:', googleUrl);
         console.log('FieldMask:', fieldMask);
@@ -310,7 +310,13 @@ app.delete('/api/user-restaurants/:id', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`프록시 서버가 http://localhost:${PORT}에서 실행 중입니다.`);
-    console.log(`웹사이트: http://localhost:${PORT}`);
-});
+// Vercel에서는 module.exports를 사용
+module.exports = app;
+
+// 로컬 개발 환경에서만 서버 시작
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        console.log(`프록시 서버가 http://localhost:${PORT}에서 실행 중입니다.`);
+        console.log(`웹사이트: http://localhost:${PORT}`);
+    });
+}
